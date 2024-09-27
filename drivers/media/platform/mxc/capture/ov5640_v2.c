@@ -1748,6 +1748,8 @@ static int ov5640_set_AE_target(int target)
 	return 0;
 }
 
+#endif
+
 /* enable = 0 to turn off night mode
    enable = 1 to turn on night mode */
 static int ov5640_set_night_mode(int enable)
@@ -1768,7 +1770,6 @@ static int ov5640_set_night_mode(int enable)
 
 	return 0;
 }
-#endif
 
 /* enable = 0 to turn off AEC/AGC
    enable = 1 to turn on AEC/AGC */
@@ -2025,8 +2026,9 @@ static int ov5640_change_mode_direct(enum ov5640_frame_rate frame_rate,
 	/* set AE target */
 //	ov5640_set_AE_target(AE_Target);
 
-	/* update night mode setting */
-//	ov5640_set_night_mode(night_mode);
+	/* update night mode setting, workaround for AE stuck */
+	ov5640_set_night_mode(0);
+	ov5640_set_night_mode(1);
 
 	/* skip 9 vysnc: start capture at 10th vsync */
 	if (mode == ov5640_mode_XGA_1024_768 && frame_rate == ov5640_30_fps) {
