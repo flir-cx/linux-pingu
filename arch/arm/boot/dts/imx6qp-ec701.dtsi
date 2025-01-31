@@ -82,7 +82,7 @@
 	};
 
 	fvdk {
-		compatible = "flir,fvdk";
+		compatible = "flir,fvd", "flir,fvdk";
 		fpa-supply = <&reg_ec701_4v0_fpa>;
 		1v1_fpga-supply = <&DA9063_BPRO>;
 		1v2_fpga-supply = <&DA9063_PERI_SW>;
@@ -145,20 +145,13 @@
 			enable-active-high;
 		};
 
-		/* Required by fvdk driver */
-		reg_ec701_fpa_i2c: ec701_fpa_i2c {
-			compatible = "regulator-fixed";
-			regulator-name = "fpa_i2c";
-			enable-active-high;
-		};
-
 		/* DISP_PWR_EN */
 		reg_disp_pwr_en: reg_disp_pwr_en {
 			compatible = "regulator-fixed";
-			regulator-name = "1V8D_VF";
+			regulator-name = "3V15_DISP";
 			regulator-min-microvolt = <1800000>;
 			regulator-max-microvolt = <1800000>;
-			gpio = <&ec701_pca9534_0x46 6 GPIO_ACTIVE_HIGH>;
+			gpio = <&gpio4 13 GPIO_ACTIVE_HIGH>;
 			regulator-boot-on;
 			enable-active-high;
 		};
@@ -214,11 +207,12 @@
 
 	lcd@0 {
 		compatible = "fsl,lcd";
+		// TODO: See LEIA for disabling DI pins in sleep mode
 		ipu_id = <0>;
 		disp_id = <0>;
 		default_ifmt = "RGB24";
 		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_ipu1_di0_enabled>;
+		pinctrl-0 = <&pinctrl_disp_pwr_gpio>;
 		display = <&lcdtiming>;
 		status = "okay";
 		bootlogo = <0x0 0x0>;
@@ -256,7 +250,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_enet>;
 	phy-mode = "rmii";
-	status = "okay";
+	status = "disabled";
 };
 
 &ecspi1 {
@@ -350,6 +344,10 @@
 			compatible = "dlg,da9063-reset";
 		};
 
+		comp1v2 {
+			compatible = "dlg,da9063-comp1v2"; /* Monitors battery voltage */
+		};
+
 		/*
 		 * Regulator                Signal      Voltage     Enabled
 		 * -------------------------------------------------------------
@@ -400,10 +398,6 @@
 
 				regulator-initial-mode = <DA9063_BUCK_MODE_SYNC>;
 				regulator-allowed-modes = <DA9063_BUCK_MODE_SYNC>;
-				regulator-state-mem {
-					regulator-suspend-uv= <950000>;
-					regulator-off-in-suspend;
-				};
 			};
 
 			/* VCCSOC */
@@ -416,19 +410,18 @@
 
 				regulator-initial-mode = <DA9063_BUCK_MODE_SYNC>;
 				regulator-allowed-modes = <DA9063_BUCK_MODE_SYNC>;
-				regulator-state-mem {
-					regulator-suspend-uv= <950000>;
-					regulator-off-in-suspend;
-				};
 			};
 
 			/* 1V8D */
 			DA9063_BIO:bio  {
-				regulator-initial-mode = <DA9063_BUCK_MODE_SYNC>;
+				/* SLEEP mode (PFM) can be used for low currents up to 300mA.
+				 * Expected load is about 30mA.
+				 */
+				regulator-initial-mode = <DA9063_BUCK_MODE_SLEEP>;
 				regulator-name = "DA9063_BIO";
 				regulator-boot-on;
 				regulator-always-on;
-				regulator-allowed-modes = <DA9063_BUCK_MODE_SYNC>;
+				regulator-allowed-modes = <DA9063_BUCK_MODE_SLEEP>;
 			};
 
 			/* 2V5D_FPGA */
@@ -442,11 +435,14 @@
 
 			/* 1V2D */
 			DA9063_BPERI:bperi  {
-				regulator-initial-mode = <DA9063_BUCK_MODE_SYNC>;
+				/* SLEEP mode (PFM) can be used for low currents up to 300mA.
+				 * Expected load is about 100mA.
+				 */
+				regulator-initial-mode = <DA9063_BUCK_MODE_SLEEP>;
 				regulator-name = "DA9063_BPERI";
 				regulator-boot-on;
 				regulator-always-on;
-				regulator-allowed-modes = <DA9063_BUCK_MODE_SYNC>;
+				regulator-allowed-modes = <DA9063_BUCK_MODE_SLEEP>;
 			};
 
 			/* 1V1D_FPGA */
@@ -683,17 +679,10 @@
 		>;
 	};
 
-	pinctrl_i2c2: i2c2grp {
+	pinctrl_disp_pwr_gpio: disppwrgrp {
 		fsl,pins = <
-			MX6QDL_PAD_KEY_COL3__I2C2_SCL  0x4001b8b1
-			MX6QDL_PAD_KEY_ROW3__I2C2_SDA  0x4001b8b1
-		>;
-	};
-
-	pinctrl_i2c2_gpio: i2c2gpiogrp {
-		fsl,pins = <
-			MX6QDL_PAD_KEY_COL3__GPIO4_IO12 0x4001b8b1
-			MX6QDL_PAD_KEY_ROW3__GPIO4_IO13 0x4001b8b1
+			/* DISP_PWR_EN, EC701 rev E */
+			MX6QDL_PAD_KEY_ROW3__GPIO4_IO13		0x1b0b0
 		>;
 	};
 
@@ -729,6 +718,7 @@
 			>;
 	};
 
+	// TODO: to be removed, we don't use this interface, we use mipi.
 	pinctrl_ipu1_di0_enabled: ipu1di0_enabled_grp {
 		fsl,pins = <
 			MX6QDL_PAD_DI0_DISP_CLK__IPU1_DI0_DISP_CLK	0xA8
@@ -762,6 +752,7 @@
 			MX6QDL_PAD_DISP0_DAT23__IPU1_DISP0_DATA23	0xA8
 		>;
 	};
+	// TODO: to be removed, we don't use this interface, we use mipi.
 	pinctrl_ipu1_di0_disabled: ipu1di0_disabled_grp {
 		fsl,pins = <
 		/*
@@ -827,8 +818,6 @@
 		>;
 	};
 
-
-
 	pinctrl_uart1: uart1grp {
 		fsl,pins = <
 			MX6QDL_PAD_SD3_DAT6__UART1_RX_DATA	0x1b0b1
@@ -840,6 +829,12 @@
 		fsl,pins = <
 			MX6QDL_PAD_SD3_DAT4__UART2_RX_DATA	0x1b0b1
 			MX6QDL_PAD_SD3_DAT5__UART2_TX_DATA	0x1b0b1
+		>;
+	};
+
+	pinctrl_pcie: pciegrp {
+		fsl,pins = <
+			MX6QDL_PAD_SD1_DAT0__GPIO1_IO16	0x1b0b1
 		>;
 	};
 
@@ -959,6 +954,13 @@
 	};
 };
 
+&pcie {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_pcie>;
+	reset-gpio = <&gpio1 16 0>;
+	status = "okay";
+};
+
 &ipu1 {
 	bypass_reset = <1>;
 	// IOMUX_GPR6: ID0 = F (real time), ID1 = 4 (high prio), ID2 = 2 (normal prio)
@@ -978,15 +980,28 @@
 &cpu0{
 	arm-supply = <&DA9063_BCORE1>;
 	soc-supply = <&DA9063_BCORE2>;
+
+	/* Operating points differ a little compared to imx6q.dtsi.
+	 * Our SoC is fused to 792MHz, so the higher freqs will not be used.
+	 * But those frequencies are added here anyway.
+	 * We are also using LDO bypass, and there is ~25mV drop on a 0ohm
+	 * resistor after the PMIC, and we must be above 1.15V.
+	 * Thus a little higher voltage on 768. 768 and 420 has also been
+	 * chosen historically for less interference with GPS/WiFi.
+	 */
 	operating-points = <
 		/* kHz	 uV */
-		996000 1280000
+		1200000 1275000
+		996000 1250000
+		852000 1250000
 		768000 1180000
 		420000 1150000
 	>;
 	fsl,soc-operating-points = <
 		/* ARM kHz SOC-PU uV */
-		996000 1200000
+		1200000 1275000
+		996000 1250000
+		852000 1250000
 		768000 1200000
 		420000 1200000
 	>;
@@ -997,13 +1012,17 @@
 	soc-supply = <&DA9063_BCORE2>;
 	operating-points = <
 		/* kHz	 uV */
-		996000 1280000
+		1200000 1275000
+		996000 1250000
+		852000 1250000
 		768000 1180000
 		420000 1150000
 	>;
 	fsl,soc-operating-points = <
 		/* ARM kHz SOC-PU uV */
-		996000 1200000
+		1200000 1275000
+		996000 1250000
+		852000 1250000
 		768000 1200000
 		420000 1200000
 	>;
@@ -1024,6 +1043,10 @@
 
 &sdma {
 	iram = <&ocram>;
+};
+
+&vdoa {
+	status = "disabled";
 };
 
 &pwm1 {
@@ -1139,7 +1162,7 @@
 	fsl,burst-clk-enable;
 	/* BCLK is EIM clock (99MHz), divided by 2 */
 	fsl,burst-clk-div = <2>;
-	status = "okay";
+	status = "disabled";
 
 	imx-weim@1,0 {
 		compatible = "fsl,imx6q-weim";
