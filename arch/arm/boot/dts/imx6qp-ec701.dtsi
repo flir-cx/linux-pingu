@@ -1070,7 +1070,11 @@
 
 /* Bluetooth */
 &uart3 {
-	pinctrl-names = "default", "sleep";
+	/* ti,wl1837-st BT driver does not support closing the uart
+	 * in suspend, therefore we only use the "default" pinctrl,
+	 * and also avoid an error message during suspend operations.
+	 */
+	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart3>;
 	pinctrl-1 = <&pinctrl_uart3_sleep>;
 	uart-has-rtscts;
