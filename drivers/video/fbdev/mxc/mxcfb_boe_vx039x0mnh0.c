@@ -430,20 +430,7 @@ static int boe_disp_bl_update_status(struct backlight_device *bl)
 
 static int boe_disp_bl_get_brightness(struct backlight_device *bl)
 {
-	u8 val;
-	int ret;
-	struct boe_lcdif_data *lcdif = bl_get_data(bl);
-
-	LOG_ENTER();
-	ret = boe_disp_read_brightness(&lcdif->pdev->dev, &val);
-	if (ret) {
-		dev_err(&lcdif->pdev->dev,
-			"Failed to read boe brightness: %d\n", ret);
-		return ret;
-	}
-	ret = val;
-	LOG_EXITR(ret);
-	return ret;
+	return bl->props.brightness;
 }
 
 static int boe_disp_bl_check_fb(struct backlight_device *bl, struct fb_info *fbi)
