@@ -17,7 +17,8 @@ enum ovRpmsg_mode {
 	ovRpmsg_mode_QQVGA_164_122 = 3, //raw vospi frame
 	ovRpmsg_mode_HQVGA = 4,
 	ovRpmsg_mode_QVGA = 5,
-	ovRpmsg_mode_MAX = 5
+	ovRpmsg_mode_256x192 = 6,
+	ovRpmsg_mode_MAX = 6
 };
 
 enum ovRpmsg_format {
@@ -31,6 +32,8 @@ enum ovRpmsg_format {
 #define IR_RESOLUTION_QVGA_HEIGHT  240
 #define IR_RESOLUTION_HQVGA_WIDTH  240
 #define IR_RESOLUTION_HQVGA_HEIGHT  160
+#define IR_RESOLUTION_256x192_HEIGHT  192
+#define IR_RESOLUTION_256x192_WIDTH  256
 #define IR_RESOLUTION_FULL_WIDTH  160
 #define IR_RESOLUTION_FULL_WIDTH_VOSPI  164
 #define IR_RESOLUTION_FULL_HEIGHT 120

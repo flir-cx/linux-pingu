@@ -396,6 +396,8 @@ static int imx_rpmsg_vidioc_s_fmt_vid_cap(struct file *filp, void *fh,
 		}
 	} else if (v4l2_pix_fmt->width == IR_RESOLUTION_REDUCED_WIDTH)
 		rpmsg_set_resolution(ovRpmsg_mode_QQVGA_128_96);
+	else if (v4l2_pix_fmt->width == IR_RESOLUTION_256x192_WIDTH)
+		rpmsg_set_resolution(ovRpmsg_mode_256x192);
 	else if (v4l2_pix_fmt->width == IR_RESOLUTION_HQVGA_WIDTH)
 		rpmsg_set_resolution(ovRpmsg_mode_HQVGA);
 	else if (v4l2_pix_fmt->width == IR_RESOLUTION_QVGA_WIDTH)
