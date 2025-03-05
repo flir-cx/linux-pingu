@@ -2,7 +2,14 @@ FLIR imx6qp
 
 The FLIR Boards
 
+ec702
+----
 Required properties:
 - compatible: "fsl,imx6qp-ec702", "fsl,imx6qp-flir"
+
+ec701
+----
+Required properties:
+- compatible: "fsl,imx6qp-ec701", "fsl,imx6qp-flir"
 
 Example:

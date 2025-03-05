@@ -16,7 +16,8 @@
 
 / {
 	model = "Teledyne FLIR i.MX6 Dual Plus ec701 Board";
-	compatible = "fsl,imx6qp-ec701", "fsl,imx6qp-ec702", "fsl,imx6qp-eoco", "fsl,imx6qp-flir", "fsl,imx6qp";
+	// TODO Remove ec702 once fvdk has been updated to support ec701
+	compatible = "fsl,imx6qp-ec701", "fsl,imx6qp-ec702", "fsl,imx6qp-flir", "fsl,imx6qp";
 	chosen {
 		bootargs = "console=ttymxc0,115200 earlyprintk";
 	};
