@@ -47,6 +47,7 @@ struct pf1550_charger {
 	u32 min_system_volt;
 	u32 thermal_regulation_temp;
 	u32 coincell_volt;
+	enum usb_charger_type chg_type_prev;
 };
 
 static struct pf1550_irq_info pf1550_charger_irqs[] = {
@@ -326,6 +327,7 @@ static ssize_t pf1550_get_summary_string(struct pf1550_charger *chg,
 {
 	const char *no_charge_reason = "";
 	int len, charge_type;
+
 	unsigned int min, max, selected;
 	const char *charger_type, *charger_state, *charger_operation;
 
@@ -346,6 +348,11 @@ static ssize_t pf1550_get_summary_string(struct pf1550_charger *chg,
 		charger_type = "unknown";
 		break;
 	}
+
+	if (chg->chg_type_prev == chg->usb_phy->chg_type)
+		return 0;
+
+	chg->chg_type_prev = chg->usb_phy->chg_type;
 
 	switch (chg->usb_phy->chg_state) {
 	case USB_CHARGER_DEFAULT:
@@ -390,8 +397,12 @@ static ssize_t pf1550_get_summary_string(struct pf1550_charger *chg,
 static void pf1550_print_summary(struct pf1550_charger *chg, const char *header)
 {
 	char summary_string[128];
-	(void) pf1550_get_summary_string(chg, true, sizeof(summary_string), summary_string);
-	dev_info(chg->dev, "[%s] %s", header, summary_string);
+	size_t ret;
+
+	ret = pf1550_get_summary_string(chg, true, sizeof(summary_string), summary_string);
+
+	if (ret > 0)
+		dev_info(chg->dev, "[%s] %s", header, summary_string);
 }
 
 static void pf1550_chg_bat_isr(struct pf1550_charger *chg)
@@ -513,7 +524,7 @@ static void pf1550_chg_thm_ok_toggle_charging(struct pf1550_charger *chg)
 	unsigned int vbus_ok;
 	unsigned int thm_ok;
 
-	dev_info(chg->dev, "Enable/disable charging based on THM_OK and VBUS_OK.\n");
+	dev_dbg(chg->dev, "Enable/disable charging based on THM_OK and VBUS_OK.\n");
 
 	if (regmap_read(chg->pf1550->regmap, PF1550_CHARG_REG_CHG_INT_OK, &chg_int_ok)) {
 		dev_err(chg->dev, "Read CHG_SNS error.\n");
@@ -534,7 +545,7 @@ static void pf1550_chg_thm_ok_toggle_charging(struct pf1550_charger *chg)
 
 	if (thm_ok && vbus_ok){
 		/* Inside range and VBUS OK. Enable charging. */
-		dev_info(chg->dev, "Inside THM range and VBUS OK, enable charging.\n");
+		dev_dbg(chg->dev, "Inside THM range and VBUS OK, enable charging.\n");
 		chg_oper = CHARGER_ON_LINEAR_ON;
 	} else {
 		/* Outside range or VBUS not OK. Disable charging. */
@@ -629,7 +640,7 @@ static void pf1550_charger_irq_work(struct work_struct *work)
 		pf1550_print_summary(chg, "VBUS");
 		break;
 	case PF1550_CHARG_IRQ_DPMI:
-		dev_info(chg->dev, "DPM interrupt.\n");
+		dev_dbg(chg->dev, "DPM interrupt.\n");
 		break;
 	case PF1550_CHARG_IRQ_THMI:
 		pf1550_chg_thm_isr(chg);
@@ -1048,6 +1059,8 @@ static int pf1550_charger_probe(struct platform_device *pdev)
 		ret = PTR_ERR(chg->charger);
 		return ret;
 	}
+
+	chg->chg_type_prev = chg->usb_phy->chg_type;
 
 	ret = pf1550_reg_init(chg);
 
