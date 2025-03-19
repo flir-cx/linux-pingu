@@ -1,0 +1,20 @@
+/*
+ * Copyright 2019 FLIR
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+/dts-v1/;
+
+/*This device tree is for latest version of ec202*/
+
+#include <dt-bindings/input/input.h>
+#include "imx7ulp.dtsi"
+#include "imx7ulp-ec202-prodtest.dtsi"
+
+/ {
+       model = "FLIR i.MX7ULP ec202 board";
+       compatible = "flir,imx7ulp-ec202", "fsl,imx7ulp", "Generic DT based system";
+};
